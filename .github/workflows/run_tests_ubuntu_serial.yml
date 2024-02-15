@@ -1,0 +1,77 @@
+###
+# Build hdf5 dependencies and cache them in a combined directory.
+###
+
+name: build Ubuntu/Linux netCDF in serial
+
+on: 
+  push:
+    branches:  [ main, master] 
+  
+concurrency:  
+  group: ${{ github.workflow}}-${{ github.head_ref }}  
+  cancel-in-progress: true
+
+jobs:
+
+  build-deps-parallel:
+
+    runs-on: ubuntu-latest
+
+    env:
+      CC: mpicc
+      FC: mpifort
+      CXX: mpicxx
+      CPPFLAGS: "-I/usr/include -I/usr/local/include"
+      CIME_TEST_PLATFORM: ubuntu-latest
+      # Versions of all dependencies can be updated here
+      PNETCDF_VERSION: pnetcdf-1.12.3
+      NETCDF_FORTRAN_VERSION: v4.6.0
+      MCT_VERSION: MCT_2.11.0
+      PARALLELIO_VERSION: pio2_5_10
+      NETCDF_C_PATH: /usr
+      NETCDF_FORTRAN_PATH: ${HOME}/netcdf-fortran
+      PNETCDF_PATH: ${HOME}/pnetcdf
+      CIME_MODEL: cesm
+      CIME_DRIVER: mct
+      hdf5: 1.14.0
+    
+    steps:
+      - name: Install System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl
+          sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake libnetcdf-dev # CESM-share
+
+      # - uses: actions/checkout@v4
+        ###
+        # Installing libhdf5
+        ###
+      - name: Cache libhdf5-${{ env.hdf5 }}
+        id: cache-hdf5
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/${{ env.hdf5 }}
+          key: hdf5-${{ runner.os }}-${{ env.hdf5 }}
+
+      - name: Build libhdf5-${{ env.hdf5 }}
+        if: steps.cache-hdf5.outputs.cache-hit != 'true'
+        run: |
+          set -x
+
+          wget https://support.hdfgroup.org/ftp/HDF/releases/HDF4.2.15/src/hdf-4.2.15.tar.bz2
+          tar -jxf hdf-4.2.15.tar.bz2
+          pushd hdf-4.2.15
+          ./configure --prefix=${HOME}/environments/${{ env.hdf5 }} --disable-static --enable-shared --disable-fortran --disable-netcdf --with-szlib --enable-hdf4-xdr
+          make -j
+          make install -j
+          popd
+
+          wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo ${{ env.hdf5 }} | cut -d. -f 1,2)/hdf5-${{ env.hdf5 }}/src/hdf5-${{ env.hdf5 }}.tar.bz2
+          tar -jxf hdf5-${{ env.hdf5 }}.tar.bz2
+          pushd hdf5-${{ env.hdf5 }}
+          ./configure --disable-static --enable-shared --prefix=${HOME}/environments/${{ env.hdf5 }} --enable-hl --with-szlib
+          make -j
+          make install -j
+          popd
+
