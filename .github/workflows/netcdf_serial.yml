@@ -42,7 +42,7 @@ jobs:
       - name: Install System dependencies
         run: |
           sudo apt-get update
-          sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl
+          sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
           sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake libnetcdf-dev # CESM-share
 
       # - uses: actions/checkout@v4
@@ -80,15 +80,15 @@ jobs:
       ###
       # Installing libnetcdf
       ###
-      - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
-        id: cache-netcdf
-        uses: actions/cache@v4
-        with:
-          path: ~/environments/${{ env.NETCDF_PATH }}
-          key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+      # - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
+      #   id: cache-netcdf
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/environments/${{ env.NETCDF_PATH }}
+      #     key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
 
-      - name: Build libnetcdf-${{ env.NETCDF_VERSION }}
-        if: steps.cache-netcdf.outputs.cache-hit != 'true'
+      - name: Build netcdf-${{ env.NETCDF_VERSION }}
+        # if: steps.cache-netcdf.outputs.cache-hit != 'true'
         run: |
           wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
           tar -xzf v${{ env.NETCDF_VERSION }}.tar.gz
@@ -104,3 +104,15 @@ jobs:
           make -j
           make install -j
           popd
+      
+      - name: list files
+        run: |
+          ls -l ~/environments/${{ env.NETCDF_PATH }}
+          ls -l ~/environments/${{ env.hdf5 }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netcdf-v${{ env.NETCDF_VERSION }}_serial
+          path: |
+            ~/environments/${{ env.NETCDF_PATH }}
+            ~/environments/${{ env.hdf5 }}

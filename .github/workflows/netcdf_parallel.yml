@@ -87,15 +87,15 @@ jobs:
       ###
       # Installing libnetcdf
       ###
-      - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
-        id: cache-netcdf
-        uses: actions/cache@v4
-        with:
-          path: ~/environments/${{ env.NETCDF_PATH }}
-          key: netcdf-parallel-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+      # - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
+      #   id: cache-netcdf
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/environments/${{ env.NETCDF_PATH }}
+      #     key: netcdf-parallel-${{ runner.os }}-${{ env.NETCDF_VERSION }}
 
-      - name: Build libnetcdf-${{ env.NETCDF_VERSION }}
-        if: steps.cache-netcdf.outputs.cache-hit != 'true'
+      - name: Build netcdf-${{ env.NETCDF_VERSION }}
+        # if: steps.cache-netcdf.outputs.cache-hit != 'true'
         run: |
           wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
           tar -xzf v${{ env.NETCDF_VERSION }}.tar.gz
@@ -112,3 +112,15 @@ jobs:
           make -j
           make install -j
           popd
+      
+      - name: list files
+        run: |
+          ls -l ~/environments/${{ env.NETCDF_PATH }}
+          ls -l ~/environments/${{ env.hdf5 }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netcdf-v${{ env.NETCDF_VERSION }}_parallel
+          path: |
+            ~/environments/${{ env.NETCDF_PATH }}
+            ~/environments/${{ env.hdf5 }}
