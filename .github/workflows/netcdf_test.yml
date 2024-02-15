@@ -1,0 +1,85 @@
+###
+# Build hdf5 dependencies and cache them in a combined directory.
+###
+
+name: netCDF with curl
+
+on: 
+  push:
+    branches:  [ main, master] 
+  
+concurrency:  
+  group: ${{ github.workflow}}-${{ github.head_ref }}  
+  cancel-in-progress: true
+
+jobs:
+
+  build-deps-serial:
+
+    runs-on: ubuntu-latest
+
+    env:
+      CC: mpicc
+      FC: mpifort
+      CXX: mpicxx
+      CPPFLAGS: "-I/usr/include -I/usr/local/include"
+      # CIME_TEST_PLATFORM: ubuntu-latest
+      # Versions of all dependencies can be updated here
+      hdf5: 1.14.0
+      hdf5_path: hdf5
+      NETCDF_VERSION: 4.9.2
+      NETCDF_PATH: netcdf
+      # PNETCDF_VERSION: pnetcdf-1.12.3
+      # NETCDF_FORTRAN_VERSION: v4.6.0
+      # MCT_VERSION: MCT_2.11.0
+      # PARALLELIO_VERSION: pio2_5_10
+      # NETCDF_FORTRAN_PATH: ${HOME}/netcdf-fortran
+      # PNETCDF_PATH: ${HOME}/pnetcdf
+      # CIME_MODEL: cesm
+      # CIME_DRIVER: mct
+    
+    steps:
+      - name: Install System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
+          sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake libnetcdf-dev # CESM-share
+
+      ###
+      # Installing libnetcdf
+      ###
+      # - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
+      #   id: cache-netcdf
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/environments/${{ env.NETCDF_PATH }}
+      #     key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+
+      - name: Build netcdf-${{ env.NETCDF_VERSION }}
+        # if: steps.cache-netcdf.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
+          tar -xzf v${{ env.NETCDF_VERSION }}.tar.gz
+          pushd netcdf-c-*
+
+          # export CFLAGS=-I${HOME}/environments/${{ env.hdf5 }}/include
+          # export LDFLAGS=-L${HOME}/environments/${{ env.hdf5 }}/lib
+          # export LD_LIBRARY_PATH=${HOME}/environments/${{ env.hdf5 }}/lib
+
+          ./configure --prefix=${HOME}/environments/${{ env.NETCDF_PATH }} --enable-pnetcdf
+          
+          make -j
+          make install -j
+          popd
+      
+      - name: list files
+        run: |
+          ls -l ~/environments/${{ env.NETCDF_PATH }}
+          # ls -l ~/environments/${{ env.hdf5 }}
+
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: netcdf-v${{ env.NETCDF_VERSION }}_serial
+      #     path: |
+      #       ~/environments/${{ env.NETCDF_PATH }}
+      #       ~/environments/${{ env.hdf5 }}
