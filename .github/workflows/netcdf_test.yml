@@ -29,8 +29,8 @@ jobs:
       hdf5_path: hdf5
       NETCDF_VERSION: 4.9.2
       NETCDF_PATH: netcdf
-      # PNETCDF_VERSION: pnetcdf-1.12.3
-      # NETCDF_FORTRAN_VERSION: v4.6.0
+      PNETCDF_VERSION: pnetcdf-1.12.3
+      NETCDF_FORTRAN_VERSION: v4.6.0
       # MCT_VERSION: MCT_2.11.0
       # PARALLELIO_VERSION: pio2_5_10
       # NETCDF_FORTRAN_PATH: ${HOME}/netcdf-fortran
@@ -43,43 +43,132 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install -y libaec-dev zlib1g-dev automake autoconf libcurl4-openssl-dev libjpeg-dev wget curl bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
-          sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake libnetcdf-dev # CESM-share
+          sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake # CESM-share
 
+      - name: Cache libcurl
+        id: cache-curl
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/curl
+          key: curl
+
+      - name: build curl
+        if: steps.cache-curl.outputs.cache-hit != 'true'
+        run: |
+          wget -nv https://github.com/curl/curl/releases/download/curl-8_6_0/curl-8.6.0.tar.gz
+          tar -xzf curl-8.6.0.tar.gz
+          pushd curl-8.6.0
+
+          sudo apt install libpsl-dev
+          ./configure --with-openssl --prefix=${HOME}/environments/curl
+          make -j && make install -j
+
+          # ./configure --with-openssl
+          # make -j && sudo make install -j
+          popd
+      
+      # - uses: actions/checkout@v4
       ###
-      # Installing libnetcdf
+      # Installing libhdf5
       ###
-      # - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
-      #   id: cache-netcdf
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/environments/${{ env.NETCDF_PATH }}
-      #     key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+      - name: Cache libhdf5-${{ env.hdf5 }}
+        id: cache-hdf5
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/hdf5
+          key: hdf5-${{ runner.os }}-${{ env.hdf5 }}
+
+      - name: Build libhdf5-${{ env.hdf5 }}
+        if: steps.cache-hdf5.outputs.cache-hit != 'true'
+        run: |
+          set -x
+
+          wget -nv https://support.hdfgroup.org/ftp/HDF/releases/HDF4.2.15/src/hdf-4.2.15.tar.bz2
+          tar -jxf hdf-4.2.15.tar.bz2
+          pushd hdf-4.2.15
+          ./configure --prefix=${HOME}/environments/hdf5 --disable-static --enable-shared --disable-fortran --disable-netcdf --with-szlib --enable-hdf4-xdr
+          make -j
+          make install -j
+          popd
+
+          wget -nv https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo ${{ env.hdf5 }} | cut -d. -f 1,2)/hdf5-${{ env.hdf5 }}/src/hdf5-${{ env.hdf5 }}.tar.bz2
+          tar -jxf hdf5-${{ env.hdf5 }}.tar.bz2
+          pushd hdf5-${{ env.hdf5 }}
+          ./configure --disable-static --enable-shared --prefix=${HOME}/environments/hdf5 --enable-hl --with-szlib
+          make -j
+          make install -j
+          popd
+
+      - name: Cache netcdf
+        id: cache-netcdf
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/netcdf
+          key: netcdf
+          save-always: true
 
       - name: Build netcdf-${{ env.NETCDF_VERSION }}
         # if: steps.cache-netcdf.outputs.cache-hit != 'true'
         run: |
-          wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
+          wget -nv https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
           tar -xzf v${{ env.NETCDF_VERSION }}.tar.gz
           pushd netcdf-c-*
 
-          # export CFLAGS=-I${HOME}/environments/${{ env.hdf5 }}/include
-          # export LDFLAGS=-L${HOME}/environments/${{ env.hdf5 }}/lib
-          # export LD_LIBRARY_PATH=${HOME}/environments/${{ env.hdf5 }}/lib
+          export CFLAGS=-I${HOME}/environments/hdf5/include
+          export LDFLAGS=-L${HOME}/environments/hdf5/lib
+          export LD_LIBRARY_PATH=${HOME}/environments/hdf5/lib:~/environments/curl/lib
 
-          ./configure --prefix=${HOME}/environments/${{ env.NETCDF_PATH }} --enable-pnetcdf
+          ./configure --enable-hdf5 --enable-dap --disable-dap-remote-tests  --enable-doxygen  --enable-external-server-tests --disable-xml2 \
+            --prefix=${HOME}/environments/netcdf
           
           make -j
           make install -j
           popd
       
+      - name: cache pnetcdf
+        id: cache-pnetcdf
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/pnetcdf
+          key: pnetcdf
+
+      - name: pnetcdf build
+        if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
+        run: |
+          wget https://parallel-netcdf.github.io/Release/${{ env.PNETCDF_VERSION }}.tar.gz
+          tar -xzvf ${{ env.PNETCDF_VERSION }}.tar.gz
+          ls -l
+          pushd ${{ env.PNETCDF_VERSION }}
+          ./configure --prefix=${HOME}/environments/pnetcdf --enable-shared --disable-cxx
+          make
+          make install
+          popd
+      
+      - name: Cache netcdf-fortran
+        id: cache-netcdf-fortran
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/netcdf-fortran
+          key: netcdf-fortran
+
+      - name: netcdf fortran build
+        if: steps.cache-netcdf-fortran.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/Unidata/netcdf-fortran/archive/${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
+          tar -xzvf ${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
+          ls -l
+          pushd netcdf-fortran-*
+          
+          ./configure --prefix=${HOME}/environments/netcdf-fortran
+          make
+          make install
+      
       - name: list files
         run: |
-          ls -l ~/environments/${{ env.NETCDF_PATH }}
-          # ls -l ~/environments/${{ env.hdf5 }}
-
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: netcdf-v${{ env.NETCDF_VERSION }}_serial
-      #     path: |
-      #       ~/environments/${{ env.NETCDF_PATH }}
-      #       ~/environments/${{ env.hdf5 }}
+          ls -l ~/environments
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netcdf-v${{ env.NETCDF_VERSION }}_serial
+          path: |
+            ~/environments
