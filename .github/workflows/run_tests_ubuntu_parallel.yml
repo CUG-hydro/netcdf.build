@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
 
-  build-deps-serial:
+  build-deps-parallel:
 
     runs-on: ubuntu-latest
 
@@ -78,6 +78,34 @@ jobs:
           tar -zxf pnetcdf-1.12.3.tar.gz
           pushd pnetcdf-1.12.3
           CC=mpicc ./configure --disable-static --enable-shared --prefix=${HOME}/environments/${{ env.hdf5 }} 
+          make -j
+          make install -j
+          popd
+
+      ###
+      # Installing libnetcdf
+      ###
+      - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
+        id: cache-netcdf
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/${{ env.NETCDF_PATH }}
+          key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+
+      - name: Build libhdf5-${{ env.hdf5 }}
+        if: steps.cache-hdf5.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
+          tar -jxf v${{ env.NETCDF_VERSION }}.tar.gz
+          pushd netcdf-c-*
+
+          export CFLAGS=-I${HOME}/environments/${{ env.hdf5 }}/include
+          # export LDFLAGS=-L${HOME}/environments/${{ env.hdf5 }}/lib
+          export LD_LIBRARY_PATH=${HOME}/environments/${{ env.hdf5 }}/lib
+
+          ./configure --enable-hdf5 --enable-dap --disable-dap-remote-tests  --enable-doxygen  --enable-external-server-tests --disable-xml2 \
+            --prefix=${HOME}/environments/${{ env.NETCDF_PATH }}
+          
           make -j
           make install -j
           popd

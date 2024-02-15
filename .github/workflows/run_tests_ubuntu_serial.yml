@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
 
-  build-deps-parallel:
+  build-deps-serial:
 
     runs-on: ubuntu-latest
 
@@ -23,18 +23,20 @@ jobs:
       FC: mpifort
       CXX: mpicxx
       CPPFLAGS: "-I/usr/include -I/usr/local/include"
-      CIME_TEST_PLATFORM: ubuntu-latest
+      # CIME_TEST_PLATFORM: ubuntu-latest
       # Versions of all dependencies can be updated here
-      PNETCDF_VERSION: pnetcdf-1.12.3
-      NETCDF_FORTRAN_VERSION: v4.6.0
-      MCT_VERSION: MCT_2.11.0
-      PARALLELIO_VERSION: pio2_5_10
-      NETCDF_C_PATH: /usr
-      NETCDF_FORTRAN_PATH: ${HOME}/netcdf-fortran
-      PNETCDF_PATH: ${HOME}/pnetcdf
-      CIME_MODEL: cesm
-      CIME_DRIVER: mct
       hdf5: 1.14.0
+      hdf5_path: hdf5
+      NETCDF_VERSION: 4.9.2
+      NETCDF_PATH: netcdf
+      # PNETCDF_VERSION: pnetcdf-1.12.3
+      # NETCDF_FORTRAN_VERSION: v4.6.0
+      # MCT_VERSION: MCT_2.11.0
+      # PARALLELIO_VERSION: pio2_5_10
+      # NETCDF_FORTRAN_PATH: ${HOME}/netcdf-fortran
+      # PNETCDF_PATH: ${HOME}/pnetcdf
+      # CIME_MODEL: cesm
+      # CIME_DRIVER: mct
     
     steps:
       - name: Install System dependencies
@@ -44,9 +46,9 @@ jobs:
           sudo apt install libxml2-utils pylint wget gfortran openmpi-bin netcdf-bin libopenmpi-dev cmake libnetcdf-dev # CESM-share
 
       # - uses: actions/checkout@v4
-        ###
-        # Installing libhdf5
-        ###
+      ###
+      # Installing libhdf5
+      ###
       - name: Cache libhdf5-${{ env.hdf5 }}
         id: cache-hdf5
         uses: actions/cache@v4
@@ -75,3 +77,30 @@ jobs:
           make install -j
           popd
 
+      ###
+      # Installing libnetcdf
+      ###
+      - name: Cache libnetcdf-${{ env.NETCDF_VERSION }}
+        id: cache-netcdf
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/${{ env.NETCDF_PATH }}
+          key: netcdf-${{ runner.os }}-${{ env.NETCDF_VERSION }}
+
+      - name: Build libhdf5-${{ env.hdf5 }}
+        if: steps.cache-hdf5.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
+          tar -jxf v${{ env.NETCDF_VERSION }}.tar.gz
+          pushd netcdf-c-*
+
+          export CFLAGS=-I${HOME}/environments/${{ env.hdf5 }}/include
+          # export LDFLAGS=-L${HOME}/environments/${{ env.hdf5 }}/lib
+          export LD_LIBRARY_PATH=${HOME}/environments/${{ env.hdf5 }}/lib
+
+          ./configure --enable-hdf5 --enable-dap --disable-dap-remote-tests  --enable-doxygen  --enable-external-server-tests --disable-xml2 \
+            --prefix=${HOME}/environments/${{ env.NETCDF_PATH }}
+          
+          make -j
+          make install -j
+          popd
