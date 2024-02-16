@@ -58,9 +58,10 @@ download() {
 
   wget $args https://curl.haxx.se/download/curl-$CLTAG.tar.gz
   wget $args https://zlib.net/fossils/zlib-$ZLTAG.tar.gz
-  wget $args https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo $H5TAG | cut -d. -f 1,2)/hdf5-$H5TAG/src/hdf5-$H5TAG.tar.gz
+  # wget $args https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo $H5TAG | cut -d. -f 1,2)/hdf5-$H5TAG/src/hdf5-$H5TAG.tar.gz
   wget $args https://downloads.unidata.ucar.edu/netcdf-c/$NCTAG/netcdf-c-$NCTAG.tar.gz
   wget $args https://downloads.unidata.ucar.edu/netcdf-fortran/$NFTAG/netcdf-fortran-$NFTAG.tar.gz
+  wget https://parallel-netcdf.github.io/Release/pnetcdf-$PNCTAG.tar.gz
   # cd ..
 }
 
@@ -97,6 +98,8 @@ build_pnetcdf() {
 }
 
 build_hdf5() {
+  wget $args https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo $H5TAG | cut -d. -f 1,2)/hdf5-$H5TAG/src/hdf5-$H5TAG.tar.gz
+
   tar -xf hdf5-$H5TAG.tar.gz
   cd hdf5-$H5TAG/
   ./configure --with-zlib=${ZDIR} --prefix=${H5DIR} --enable-parallel
