@@ -49,8 +49,9 @@ jobs:
         id: cache-zlib
         uses: actions/cache@v4
         with:
-          path: ~/environments/zlib
+          path: ~/environment/zlib
           key: Ubuntu2204__curl-v${{env.CLTAG}}_zlib-v${{env.ZLTAG}}
+          save-always: true
       
       - name: build curl and zlib
         if: steps.cache-zlib.outputs.cache-hit != 'true'
@@ -64,12 +65,13 @@ jobs:
         id: cache-hdf5
         uses: actions/cache@v4
         with:
-          path: ~/environments/hdf5
+          path: ~/environment/hdf5
           key: Ubuntu2204__hdf5-v${{env.H5TAG}}
-      
+          save-always: true
+
       - name: build hdf5
         if: steps.cache-hdf5.outputs.cache-hit != 'true'
-        run: 
+        run: |
           source build_netcdff.sh
           build_hdf5
       
@@ -78,12 +80,13 @@ jobs:
         id: cache-pnetcdf
         uses: actions/cache@v4
         with:
-          path: ~/environments/pnetcdf
+          path: ~/environment/pnetcdf
           key: Ubuntu2204__pnetcdf-v${{env.PNCTA}}
+          save-always: true
 
       - name: build pnetcdf
         if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
-        run: 
+        run: |
           source build_netcdff.sh
           build_pnetcdf
 
@@ -91,10 +94,11 @@ jobs:
 
       - name: build netcdf and netcdff
         run: |
-          tree ${HOME}/environment/hdf5
-      #     source build_netcdff.sh
-      #     build_netcdf
-      #     build_netcdff
+          ls -l ${HOME}/environment
+          # tree ${HOME}/environment/hdf5
+          source build_netcdff.sh
+          build_netcdf
+          build_netcdff
 
 
       # - name: list files

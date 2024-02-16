@@ -61,7 +61,7 @@ download() {
   wget $args https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo $H5TAG | cut -d. -f 1,2)/hdf5-$H5TAG/src/hdf5-$H5TAG.tar.gz
   wget $args https://downloads.unidata.ucar.edu/netcdf-c/$NCTAG/netcdf-c-$NCTAG.tar.gz
   wget $args https://downloads.unidata.ucar.edu/netcdf-fortran/$NFTAG/netcdf-fortran-$NFTAG.tar.gz
-  cd ..
+  # cd ..
 }
 
 build_curl() {
