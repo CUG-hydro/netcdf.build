@@ -7,7 +7,9 @@ name: netcdf_openmpi_v4.9.2
 on: 
   push:
     branches:  [ main, master] 
-  
+    tags:
+      - '*'
+
 concurrency:  
   group: $${{ github.workflow}}-${{ github.head_ref }}  
   cancel-in-progress: true
@@ -48,6 +50,8 @@ jobs:
           sudo apt install libxml2-utils # CESM-share
           sudo apt install libpsl-dev libcurl4-openssl-dev
           # sudo apt install pylint 
+
+          mpicc -v
 
       - name: cache curl and zlib
         id: cache-zlib
