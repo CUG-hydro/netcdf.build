@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
 
-  build-netcdff:
+  netcdf_openmpi:
 
     runs-on: ubuntu-latest
 
@@ -106,8 +106,8 @@ jobs:
         run: |
           ls -l ~/environment
           
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: Ubuntu2204_${{env.compiler}}_netcdf-v4.9.2
-      #     path: |
-      #       ~/environment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ubuntu2204_${{env.compiler}}_netcdf-v4.9.2
+          path: |
+            ~/environment

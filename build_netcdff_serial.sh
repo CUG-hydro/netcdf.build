@@ -114,7 +114,7 @@ build_hdf5() {
 }
 
 build_netcdf() {
-  wget $args https://downloads.unidata.ucar.edu/netcdf-c/$NCTAG/netcdf-c-$NCTAG.tar.gz  
+  wget -nv https://downloads.unidata.ucar.edu/netcdf-c/$NCTAG/netcdf-c-$NCTAG.tar.gz  
   tar -xf netcdf-c-$NCTAG.tar.gz
   cd netcdf-c-$NCTAG/
   CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib ./configure --prefix=${NCDIR} \
@@ -127,7 +127,7 @@ build_netcdf() {
 }
 
 build_netcdff() {
-  wget $args https://downloads.unidata.ucar.edu/netcdf-fortran/$NFTAG/netcdf-fortran-$NFTAG.tar.gz
+  wget -nv https://downloads.unidata.ucar.edu/netcdf-fortran/$NFTAG/netcdf-fortran-$NFTAG.tar.gz
   tar -xf netcdf-fortran-$NFTAG.tar.gz
   cd netcdf-fortran-$NFTAG/
   CPPFLAGS=-I${NCDIR}/include LDFLAGS=-L${NCDIR}/lib ./configure --prefix=${NCDIR}
