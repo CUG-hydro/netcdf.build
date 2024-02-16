@@ -2,7 +2,7 @@
 # Build hdf5 dependencies and cache them in a combined directory.
 ###
 
-name: netCDF-latest
+name: netcdf_openmpi_v4.9.2
 
 on: 
   push:
@@ -46,6 +46,7 @@ jobs:
           sudo apt install -y libaec-dev zlib1g-dev automake autoconf libjpeg-dev bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
           sudo apt install gfortran openmpi-bin libopenmpi-dev cmake 
           sudo apt install libxml2-utils # CESM-share
+          sudo apt install libpsl-dev libcurl4-openssl-dev
           # sudo apt install pylint 
 
       - name: cache curl and zlib
@@ -105,8 +106,8 @@ jobs:
         run: |
           ls -l ~/environment
           
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Ubuntu2204_${{env.compiler}}_netcdf-v4.9.2
-          path: |
-            ~/environment
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: Ubuntu2204_${{env.compiler}}_netcdf-v4.9.2
+      #     path: |
+      #       ~/environment

@@ -33,9 +33,9 @@ NCTAG=${NCTAG:-"4.9.2"}
 NFTAG=${NFTAG:-"4.6.0"}
 
 ## define compilers
-CXX=${CXX:-mpicxx}
-CC=${CC:-mpicc}
-FC=${FC:-mpifort}
+CXX=${CXX:-g++}
+CC=${CC:-gcc}
+FC=${FC:-gfortran}
 F90=${FC}
 F77=${FC}
 
@@ -66,6 +66,7 @@ download() {
 }
 
 build_curl() {
+  wget $args https://curl.haxx.se/download/curl-$CLTAG.tar.gz
   tar -xf curl-$CLTAG.tar.gz
   cd curl-$CLTAG/
 
@@ -77,6 +78,7 @@ build_curl() {
 }
 
 build_zlib() {
+  wget $args https://zlib.net/fossils/zlib-$ZLTAG.tar.gz
   tar -xf zlib-$ZLTAG.tar.gz
   cd zlib-$ZLTAG/
 
@@ -86,23 +88,25 @@ build_zlib() {
   cd ..
 }
 
-build_pnetcdf() {
-  # wget https://parallel-netcdf.github.io/Release/pnetcdf-$PNCTAG.tar.gz
-  tar -xf pnetcdf-$PNCTAG.tar.gz
-  cd pnetcdf-$PNCTAG
-  ls -l
-  ./configure --prefix=${PNDIR} --enable-shared --disable-cxx
-  make -j8
-  make install
-  cd ..
-}
+# build_pnetcdf() {
+#   wget https://parallel-netcdf.github.io/Release/pnetcdf-$PNCTAG.tar.gz
+
+#   tar -xf pnetcdf-$PNCTAG.tar.gz
+#   cd pnetcdf-$PNCTAG
+#   ls -l
+#   ./configure --prefix=${PNDIR} --enable-shared --disable-cxx
+#   make -j8
+#   make install
+#   cd ..
+# }
 
 build_hdf5() {
   wget -nv https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$(echo $H5TAG | cut -d. -f 1,2)/hdf5-$H5TAG/src/hdf5-$H5TAG.tar.gz
 
   tar -xf hdf5-$H5TAG.tar.gz
   cd hdf5-$H5TAG/
-  ./configure --with-zlib=${ZDIR} --prefix=${H5DIR} --enable-parallel
+  ./configure --with-zlib=${ZDIR} --prefix=${H5DIR} 
+  # --enable-parallel
   make -j8
   # make check
   make install
@@ -110,10 +114,12 @@ build_hdf5() {
 }
 
 build_netcdf() {
+  wget $args https://downloads.unidata.ucar.edu/netcdf-c/$NCTAG/netcdf-c-$NCTAG.tar.gz  
   tar -xf netcdf-c-$NCTAG.tar.gz
   cd netcdf-c-$NCTAG/
   CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib ./configure --prefix=${NCDIR} \
-    --disable-libxml2 --enable-parallel-tests
+    --disable-libxml2 
+    # --enable-parallel-tests
   make -j8
   # make check
   make install
@@ -121,6 +127,7 @@ build_netcdf() {
 }
 
 build_netcdff() {
+  wget $args https://downloads.unidata.ucar.edu/netcdf-fortran/$NFTAG/netcdf-fortran-$NFTAG.tar.gz
   tar -xf netcdf-fortran-$NFTAG.tar.gz
   cd netcdf-fortran-$NFTAG/
   CPPFLAGS=-I${NCDIR}/include LDFLAGS=-L${NCDIR}/lib ./configure --prefix=${NCDIR}
