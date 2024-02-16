@@ -162,14 +162,15 @@ jobs:
           
           export CFLAGS="-I$hdf5/include -I$netcdf/include -I$pnetcdf/include"
           export FFLAGS="-I$hdf5/include -I$netcdf/include -I$pnetcdf/include"
-          export LDFLAGS="-L$hdf5/lib -L$netcdf/lib -L$pnetcdf/lib"
+          export LDFLAGS="-L$hdf5/lib -L$netcdf/lib -L$pnetcdf/lib -lnetcdf"
           export LD_LIBRARY_PATH="$curl/lib:$hdf5/lib:$netcdf/lib:$pnetcdf/lib"
 
           wget -nv https://github.com/Unidata/netcdf-fortran/archive/${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
           tar -xzf ${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
           ls -l
           pushd netcdf-fortran-*
-      
+
+          # export
           ./configure --prefix=${HOME}/environments/netcdf-fortran
           make
           make install

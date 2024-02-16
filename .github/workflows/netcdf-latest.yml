@@ -1,0 +1,109 @@
+###
+# Build hdf5 dependencies and cache them in a combined directory.
+###
+
+name: netCDF-latest
+
+on: 
+  push:
+    branches:  [ main, master] 
+  
+concurrency:  
+  group: $${{ github.workflow}}-${{ github.head_ref }}  
+  cancel-in-progress: true
+
+jobs:
+
+  build-netcdff:
+
+    runs-on: ubuntu-latest
+
+    env:
+      CC: mpicc
+      FC: mpifort
+      CXX: mpicxx
+      CLTAG: "8.6.0"
+      ZLTAG: "1.3"
+      H5TAG: "1.14.0"
+      PNCTA: "1.12.3"
+      NCTAG: "4.9.2"
+      NFTAG: "4.6.0"
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: download pkgs
+        run: |
+          sudo apt update
+          sudo apt install wget curl 
+          
+          source build_netcdff.sh
+          download
+          ls -l
+
+      - name: check
+        run: |
+          ls -l
+          tree .
+          download
+      
+      - name: System Dependencies
+        run: |
+          sudo apt install -y libaec-dev zlib1g-dev automake autoconf libjpeg-dev bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
+          sudo apt install libxml2-utils pylint gfortran openmpi-bin libopenmpi-dev cmake # CESM-share
+
+
+      - name: cache curl and zlib
+        id: cache-zlib
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/zlib
+          key: Ubuntu2204__curl-v${{env.CLTAG}}_zlib-v${{env.ZLTAG}}
+      
+      - name: build curl and zlib
+        if: steps.cache-zlib.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install libpsl-dev libcurl4-openssl-dev
+          build_curl && build_zlib
+      
+
+
+      - name: cache hdf5
+        id: cache-hdf5
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/hdf5
+          key: Ubuntu2204__hdf5-v${{env.H5TAG}}
+      
+      - name: build hdf5
+        if: steps.cache-hdf5.outputs.cache-hit != 'true'
+        run: build_hdf5
+      
+
+      - name: cache pnetcdf
+        id: cache-pnetcdf
+        uses: actions/cache@v4
+        with:
+          path: ~/environments/pnetcdf
+          key: Ubuntu2204__pnetcdf-v${{env.PNCTA}}
+
+      - name: build pnetcdf
+        if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
+        run: build_pnetcdf
+
+
+
+      - name: build netcdf and netcdff
+        run: |
+          build_netcdf
+          build_netcdff
+
+
+      - name: list files
+        run: |
+          ls -l ~/environment
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ubuntu2204_netcdf-v4.9.2
+          path: |
+            ~/environment
