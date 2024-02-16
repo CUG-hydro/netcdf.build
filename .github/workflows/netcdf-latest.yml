@@ -39,18 +39,11 @@ jobs:
           source build_netcdff.sh
           download
           ls -l
-
-      - name: check
-        run: |
-          ls -l
-          tree .
-          download
       
       - name: System Dependencies
         run: |
           sudo apt install -y libaec-dev zlib1g-dev automake autoconf libjpeg-dev bzip2 m4 flex bison cmake libzip-dev doxygen openssl tree
           sudo apt install libxml2-utils pylint gfortran openmpi-bin libopenmpi-dev cmake # CESM-share
-
 
       - name: cache curl and zlib
         id: cache-zlib
@@ -63,8 +56,8 @@ jobs:
         if: steps.cache-zlib.outputs.cache-hit != 'true'
         run: |
           sudo apt install libpsl-dev libcurl4-openssl-dev
+          source build_netcdff.sh
           build_curl && build_zlib
-      
 
 
       - name: cache hdf5
@@ -76,7 +69,9 @@ jobs:
       
       - name: build hdf5
         if: steps.cache-hdf5.outputs.cache-hit != 'true'
-        run: build_hdf5
+        run: 
+          source build_netcdff.sh
+          build_hdf5
       
 
       - name: cache pnetcdf
@@ -88,19 +83,23 @@ jobs:
 
       - name: build pnetcdf
         if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
-        run: build_pnetcdf
+        run: 
+          source build_netcdff.sh
+          build_pnetcdf
 
 
 
       - name: build netcdf and netcdff
         run: |
-          build_netcdf
-          build_netcdff
+          tree ${HOME}/environment/hdf5
+      #     source build_netcdff.sh
+      #     build_netcdf
+      #     build_netcdff
 
 
-      - name: list files
-        run: |
-          ls -l ~/environment
+      # - name: list files
+      #   run: |
+      #     ls -l ~/environment
           
       - uses: actions/upload-artifact@v4
         with:
