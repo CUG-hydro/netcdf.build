@@ -108,7 +108,7 @@ jobs:
           save-always: true
 
       - name: Build netcdf-${{ env.NETCDF_VERSION }}
-        # if: steps.cache-netcdf.outputs.cache-hit != 'true'
+        if: steps.cache-netcdf.outputs.cache-hit != 'true'
         run: |
           wget -nv https://github.com/Unidata/netcdf-c/archive/refs/tags/v${{ env.NETCDF_VERSION }}.tar.gz
           tar -xzf v${{ env.NETCDF_VERSION }}.tar.gz
@@ -135,8 +135,8 @@ jobs:
       - name: pnetcdf build
         if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
         run: |
-          wget https://parallel-netcdf.github.io/Release/${{ env.PNETCDF_VERSION }}.tar.gz
-          tar -xzvf ${{ env.PNETCDF_VERSION }}.tar.gz
+          wget -nv https://parallel-netcdf.github.io/Release/${{ env.PNETCDF_VERSION }}.tar.gz
+          tar -xzf ${{ env.PNETCDF_VERSION }}.tar.gz
           ls -l
           pushd ${{ env.PNETCDF_VERSION }}
           ./configure --prefix=${HOME}/environments/pnetcdf --enable-shared --disable-cxx
@@ -154,11 +154,22 @@ jobs:
       - name: netcdf fortran build
         if: steps.cache-netcdf-fortran.outputs.cache-hit != 'true'
         run: |
-          wget https://github.com/Unidata/netcdf-fortran/archive/${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
-          tar -xzvf ${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
+          export curl=${HOME}/environments/curl
+          export hdf5=${HOME}/environments/hdf5
+          export pnetcdf=${HOME}/environments/pnetcdf
+          export netcdf=${HOME}/environments/netcdf
+          export netcdff=${HOME}/environments/netcdf-fortran
+          
+          export CFLAGS="-I$hdf5/include -I$netcdf/include -I$pnetcdf/include"
+          export FFLAGS="-I$hdf5/include -I$netcdf/include -I$pnetcdf/include"
+          export LDFLAGS="-L$hdf5/lib -L$netcdf/lib -L$pnetcdf/lib"
+          export LD_LIBRARY_PATH="$curl/lib:$hdf5/lib:$netcdf/lib:$pnetcdf/lib"
+
+          wget -nv https://github.com/Unidata/netcdf-fortran/archive/${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
+          tar -xzf ${{ env.NETCDF_FORTRAN_VERSION }}.tar.gz
           ls -l
           pushd netcdf-fortran-*
-          
+      
           ./configure --prefix=${HOME}/environments/netcdf-fortran
           make
           make install
