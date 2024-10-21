@@ -27,6 +27,11 @@
 
 - [ ] 安装与移植
 
+文件路径一定要放对。否则需要修复rpath。
+
+1. `/opt/netcdf_4.9.2_openmpi`
+2. `/opt/netcdf_4.9.2_gcc11`
+
 ## References
 
 - Building_netcdf: <https://docs.unidata.ucar.edu/nug/current/getting_and_building_netcdf.html>

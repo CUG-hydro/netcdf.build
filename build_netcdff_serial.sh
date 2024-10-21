@@ -41,13 +41,13 @@ F77=${FC}
 
 # main directory
 # MAINDIR=${MAINDIR:-${HOME}/environment}
-MAINDIR=${HOME}/environment
+MAINDIR=/opt/netcdf_v4.9.2_gcc11
 
-CLDIR=$MAINDIR/zlib
-ZDIR=$MAINDIR/zlib
-PNDIR=$MAINDIR/pnetcdf
-H5DIR=$MAINDIR/hdf5
-NCDIR=$MAINDIR/netcdf
+NCDIR=$MAINDIR
+PNDIR=$NCDIR # pnetcdf与netcdf安装在相同文件夹
+CLDIR=$NCDIR/zlib
+ZDIR=$NCDIR/zlib
+H5DIR=$NCDIR/hdf5
 
 echo "netcdf-c: $NCTAG"
 echo $NCDIR

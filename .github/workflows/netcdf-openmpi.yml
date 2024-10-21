@@ -2,7 +2,7 @@
 # Build hdf5 dependencies and cache them in a combined directory.
 ###
 
-name: netcdf_openmpi_v4.9.2
+name: netcdf_v4.9.2_openmpi
 
 on: 
   push:
@@ -30,7 +30,8 @@ jobs:
       H5TAG: "1.14.0"
       PNCTA: "1.12.3"
       NCTAG: "4.9.2"
-      NFTAG: "4.6.0"
+      NFTAG: "4.6.1"
+      prefix: "/opt/netcdf_v4.9.2_openmpi"
       
     steps:
       - uses: actions/checkout@v4
@@ -57,9 +58,8 @@ jobs:
         id: cache-zlib
         uses: actions/cache@v4
         with:
-          path: ~/environment/zlib
+          path: ${{env.prefix}}/zlib
           key: Ubuntu2204_${{env.compiler}}_curl-v${{env.CLTAG}}_zlib-v${{env.ZLTAG}}
-          save-always: true
       
       - name: build curl and zlib
         if: steps.cache-zlib.outputs.cache-hit != 'true'
@@ -73,9 +73,8 @@ jobs:
         id: cache-hdf5
         uses: actions/cache@v4
         with:
-          path: ~/environment/hdf5
+          path: ${{env.prefix}}/hdf5
           key: Ubuntu2204_${{env.compiler}}_hdf5-v${{env.H5TAG}}
-          save-always: true
 
       - name: build hdf5
         if: steps.cache-hdf5.outputs.cache-hit != 'true'
@@ -84,21 +83,18 @@ jobs:
           build_hdf5
       
 
-      - name: cache pnetcdf
-        id: cache-pnetcdf
-        uses: actions/cache@v4
-        with:
-          path: ~/environment/pnetcdf
-          key: Ubuntu2204_${{env.compiler}}_pnetcdf-v${{env.PNCTA}}
-          save-always: true
+      # - name: cache pnetcdf
+      #   id: cache-pnetcdf
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{env.prefix}}/pnetcdf
+      #     key: Ubuntu2204_${{env.compiler}}_pnetcdf-v${{env.PNCTA}}
 
       - name: build pnetcdf
-        if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
+        # if: steps.cache-pnetcdf.outputs.cache-hit != 'true'
         run: |
           source build_netcdff.sh
           build_pnetcdf
-
-
 
       - name: build netcdf and netcdff
         run: |
@@ -108,10 +104,10 @@ jobs:
 
       - name: list files
         run: |
-          ls -l ~/environment
+          ls -l ${{env.prefix}}
           
       - uses: actions/upload-artifact@v4
         with:
           name: Ubuntu2204_${{env.compiler}}_netcdf-v4.9.2
           path: |
-            ~/environment
+            ${{env.prefix}}
