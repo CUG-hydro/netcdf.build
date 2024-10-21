@@ -30,7 +30,7 @@ ZLTAG=${ZLTAG:-"1.3"}
 H5TAG=${H5TAG:-"1.14.0"}
 PNCTAG=${PNCTAG:-"1.12.3"}
 NCTAG=${NCTAG:-"4.9.2"}
-NFTAG=${NFTAG:-"4.6.0"}
+NFTAG=${NFTAG:-"4.6.1"}
 
 ## define compilers
 CXX=${CXX:-g++}

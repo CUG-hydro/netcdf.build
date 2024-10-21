@@ -12,7 +12,7 @@
 ### Compilers
 
 - `openmpi`
-- `gcc`
+- `gcc`: 11.4.0
 
 ### Libraries
 
@@ -24,6 +24,7 @@
 - `netcdff`: 4.6.0
 
 ## TODO
+
 - [ ] 安装与移植
 
 ## References
